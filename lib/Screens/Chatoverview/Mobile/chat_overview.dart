@@ -3,10 +3,11 @@
 
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart';
-import 'package:baustellenapp/Screens/InsideChat/Mobile/inside_chat.dart';
+import 'package:baustellenappchat1/Constants/colors.dart';
+import '/Screens/InsideChat/Mobile/inside_chat.dart';
 import 'package:flutter/material.dart';
 import 'dart:async'; // For Timer
-import 'package:baustellenapp/DataBase/appwrite_constant.dart';
+import '/DataBase/appwrite_constant.dart';
 // For date formatting
 
 /// ChatOverviewScreen: Displays a list of chat conversations or all users
@@ -122,7 +123,10 @@ class _ChatOverviewScreenState extends State<ChatOverviewScreen> {
       );
 
       // Combine messages
-      final allMessages = [...senderResponse.documents, ...receiverResponse.documents];
+      final allMessages = [
+        ...senderResponse.documents,
+        ...receiverResponse.documents
+      ];
       print('Total messages fetched: ${allMessages.length}');
       for (var message in allMessages) {
         print('Message Data: ${message.data}');
@@ -184,11 +188,13 @@ class _ChatOverviewScreenState extends State<ChatOverviewScreen> {
           } else {
             lastMessage = latestMessageDoc.data['Text'] ?? '';
           }
-          String? datetimeString = latestMessageDoc.data['\$createdAt']; // Use 'createdAt'
+          String? datetimeString =
+              latestMessageDoc.data['\$createdAt']; // Use 'createdAt'
           DateTime lastMessageTime = _parseDatetime(datetimeString);
 
           int unreadCount = messages.where((msg) {
-            return msg.data['isRead'] == false && msg.data['SenderID'] == userID;
+            return msg.data['isRead'] == false &&
+                msg.data['SenderID'] == userID;
           }).length;
 
           // Update user with conversation details
@@ -250,11 +256,14 @@ class _ChatOverviewScreenState extends State<ChatOverviewScreen> {
     final payload = event.payload;
 
     // Check if the message involves the current user
-    if (payload['SenderID'] != widget.currentUserID && payload['RecieverID'] != widget.currentUserID) {
+    if (payload['SenderID'] != widget.currentUserID &&
+        payload['RecieverID'] != widget.currentUserID) {
       return;
     }
 
-    String otherUserID = payload['SenderID'] == widget.currentUserID ? payload['RecieverID'] : payload['SenderID'];
+    String otherUserID = payload['SenderID'] == widget.currentUserID
+        ? payload['RecieverID']
+        : payload['SenderID'];
 
     if (eventType.contains('.create') || eventType.contains('.update')) {
       await addOrUpdateConversationFromEvent(payload, otherUserID, eventType);
@@ -264,7 +273,8 @@ class _ChatOverviewScreenState extends State<ChatOverviewScreen> {
   }
 
   /// Adds or updates a conversation based on real-time events
-  Future<void> addOrUpdateConversationFromEvent(Map<String, dynamic> data, String otherUserID, String eventType) async {
+  Future<void> addOrUpdateConversationFromEvent(
+      Map<String, dynamic> data, String otherUserID, String eventType) async {
     String? datetimeString = data['\$createdAt']; // Use 'createdAt' field
     DateTime messageTime = _parseDatetime(datetimeString);
     bool isImage = data['Image'] ?? false;
@@ -296,7 +306,9 @@ class _ChatOverviewScreenState extends State<ChatOverviewScreen> {
             lastMessageTime: messageTime,
             avatarUrl: avatarUrl,
             isImage: isImage,
-            unreadCount: isUnread ? existingConv.unreadCount + 1 : existingConv.unreadCount,
+            unreadCount: isUnread
+                ? existingConv.unreadCount + 1
+                : existingConv.unreadCount,
           );
         });
       } else if (eventType.contains('.update')) {
@@ -310,7 +322,9 @@ class _ChatOverviewScreenState extends State<ChatOverviewScreen> {
               lastMessageTime: messageTime,
               avatarUrl: avatarUrl,
               isImage: isImage,
-              unreadCount: existingConv.unreadCount > 0 ? existingConv.unreadCount - 1 : 0,
+              unreadCount: existingConv.unreadCount > 0
+                  ? existingConv.unreadCount - 1
+                  : 0,
             );
           });
         } else if (isUnread) {
@@ -409,27 +423,133 @@ class _ChatOverviewScreenState extends State<ChatOverviewScreen> {
       );
     }
 
+    int _selectedIndex = 0;
+
+    final List<String> items = [
+      'All',
+      'Personal',
+      'Design',
+      'Work',
+      'Favourites',
+      'test',
+      'test',
+      'test',
+    ];
+
     // Display list of chat conversations or users
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Chats'),
-      ),
-      body: ListView.builder(
-        itemCount: conversations.length,
-        itemBuilder: (context, index) {
-          return ChatListItem(
-            conversation: conversations[index],
-            currentUserID: widget.currentUserID,
-            client: widget.client,
-            hasConversation: conversations[index].lastMessage.isNotEmpty,
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Optional: Implement navigation to a new chat screen
-        },
-        child: const Icon(Icons.chat),
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(25.0),
+            child: Row(
+              children: [
+                const Text(
+                  "Chats",
+                  style: TextStyle(
+                    fontSize: 50,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                const Icon(
+                  Icons.search,
+                  size: 50,
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Spacer(),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Container(
+                          width: 460,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color:
+                                AppColors.inactiveIconColor.withOpacity(0.35),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(30),
+                              bottomLeft: Radius.circular(30),
+                            ),
+                          ),
+                          child: SingleChildScrollView(
+                            scrollDirection:
+                                Axis.horizontal, // Enable horizontal scrolling
+                            child: Row(
+                              children: List.generate(items.length, (index) {
+                                final isSelected = _selectedIndex == index;
+                                return GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedIndex =
+                                          index; // Update selected index
+                                    });
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 14), // Add left padding
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                        horizontal: 15,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? Colors
+                                                .white // White background for selected item
+                                            : Colors
+                                                .transparent, // No background for unselected
+                                        borderRadius: BorderRadius.circular(
+                                            20), // Rounded container
+                                      ),
+                                      child: Text(
+                                        items[index],
+                                        style: TextStyle(
+                                          color: isSelected
+                                              ? Colors
+                                                  .black // Black text for selected item
+                                              : const Color.fromARGB(255, 141, 141,
+                                                  141), // Grey text for unselected
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: conversations.length,
+                    itemBuilder: (context, index) {
+                      return ChatListItem(
+                        conversation: conversations[index],
+                        currentUserID: widget.currentUserID,
+                        client: widget.client,
+                        hasConversation:
+                            conversations[index].lastMessage.isNotEmpty,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -452,80 +572,104 @@ class ChatListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: conversation.avatarUrl != null
-          ? CircleAvatar(
-              radius: 25,
-              backgroundImage: NetworkImage(conversation.avatarUrl!),
-            )
-          : CircleAvatar(
-              radius: 25,
-              child: Text(
-                conversation.name.isNotEmpty ? conversation.name[0] : '?',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-              ),
-            ),
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              conversation.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          if (conversation.unreadCount > 0)
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              constraints: const BoxConstraints(
-                minWidth: 24,
-                minHeight: 24,
-              ),
-              child: Center(
-                child: Text(
-                  '${conversation.unreadCount}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
+    return GestureDetector(
+      child: Container(
+        padding: const EdgeInsets.only(right: 30, left: 30, top: 30),
+        child: SizedBox(
+          width: 500,
+          height: 76,
+          child: Row(
+            children: [
+              conversation.avatarUrl != null
+                  ? CircleAvatar(
+                      radius: 38,
+                      backgroundImage: NetworkImage(conversation.avatarUrl!),
+                    )
+                  : CircleAvatar(
+                      radius: 38,
+                      child: Text(
+                        conversation.name.isNotEmpty
+                            ? conversation.name[0]
+                            : '?',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 21,
+                        ),
+                      ),
+                    ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8, right: 2),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        conversation.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 19,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (hasConversation)
+                        conversation.isImage
+                            ? const Row(
+                                children: [
+                                  Icon(Icons.camera_alt, size: 16),
+                                  SizedBox(width: 4),
+                                  Text('Foto'),
+                                ],
+                              )
+                            : Text(
+                                conversation.lastMessage,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                    ],
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-        ],
-      ),
-      subtitle: hasConversation
-          ? (conversation.isImage
-              ? const Row(
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, left: 2),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(Icons.camera_alt, size: 16),
-                    SizedBox(width: 4),
-                    Text('Foto'),
+                    if (hasConversation)
+                      Text(
+                        formatLastMessageTime(conversation.lastMessageTime),
+                        style: const TextStyle(
+                            color: AppColors.inactiveIconColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800),
+                      ),
+                    if (conversation.unreadCount > 0)
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${conversation.unreadCount}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
                   ],
-                )
-              : Text(
-                  conversation.lastMessage,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ))
-          : null,
-      trailing: hasConversation
-          ? Text(
-              formatLastMessageTime(conversation.lastMessageTime),
-              style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 12,
+                ),
               ),
-            )
-          : null,
+            ],
+          ),
+        ),
+      ),
       onTap: () {
         Navigator.push(
           context,
